@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+storage:
+  upload-dir: /data/uploads
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/storage-db
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      enabled: false

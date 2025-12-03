@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+services:
+  storage:
+    base-url: ${SERVICES_STORAGE_BASE_URL:http://localhost:8081}
+  analysis:
+    base-url: ${SERVICES_ANALYSIS_BASE_URL:http://localhost:8082}

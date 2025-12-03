@@ -1,0 +1,31 @@
+services:
+  gateway:
+    build: ./gateway-service
+    container_name: antiplag-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVICES_STORAGE_BASE_URL=http://storage:8081
+      - SERVICES_ANALYSIS_BASE_URL=http://analysis:8082
+
+  storage:
+    build: ./storage-service
+    container_name: antiplag-storage
+    ports:
+      - "8081:8081"
+    volumes:
+      - storage-data:/data
+
+  analysis:
+    build: ./analysis-service
+    container_name: antiplag-analysis
+    ports:
+      - "8082:8082"
+    volumes:
+      - analysis-data:/data
+    environment:
+      - SERVICES_STORAGE_BASE_URL=http://storage:8081
+
+volumes:
+  storage-data:
+  analysis-data:
