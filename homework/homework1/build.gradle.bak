@@ -1,0 +1,52 @@
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'jacoco'
+
+group = 'zoo'
+version = '1.0'
+
+sourceCompatibility = 17
+targetCompatibility = 17
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    guiceVersion = '5.1.0'
+    junitVersion = '5.9.2'
+    mockitoVersion = '5.3.1'
+}
+
+dependencies {
+    implementation "com.google.inject:guice:${guiceVersion}"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly   "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
+}
+
+mainClassName = 'zoo.Main'
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.9"
+}
+
+task jacocoTestReport(type: JacocoReport) {
+    dependsOn test
+    reports {
+        xml.enabled true
+        csv.enabled false
+        html.enabled true
+    }
+}
+
+task coverageReport(dependsOn: ['test', 'jacocoTestReport'])
