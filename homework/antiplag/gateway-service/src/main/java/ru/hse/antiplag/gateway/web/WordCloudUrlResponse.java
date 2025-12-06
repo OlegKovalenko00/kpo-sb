@@ -19,3 +19,4 @@ public class WordCloudUrlResponse {
         this.url = url;
     }
 }
+    
