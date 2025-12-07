@@ -1,101 +1,96 @@
 package zoo;
 
-import static org.mockito.Mockito.*;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import static org.junit.jupiter.api.Assertions.*;
+import zoo.domain.animal.Animal;
+import zoo.domain.animal.AnimalType;
+import zoo.domain.thing.Thing;
+import zoo.domain.thing.ThingType;
+import zoo.domain.zoo.Zoo;
+import zoo.factory.SimpleAnimalFactory;
+import zoo.vet.VeterinaryClinic;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 public class ZooTests {
 
-    private VeterinaryClinic clinicMock;
-    private Zoo zoo;
-
-    @BeforeEach
-    public void setUp() {
-        clinicMock = mock(VeterinaryClinic.class);
-        zoo = new Zoo(clinicMock);
+    static class AcceptAllClinic implements VeterinaryClinic {
+        @Override
+        public boolean isHealthy(zoo.domain.animal.Animal animal) {
+            return true;
+        }
     }
-    @Test
-    public void addingThingAddsToInventory() {
-        Thing t = new Thing("TestTable");
-        zoo.addThing(t);
 
-        assertTrue(zoo.getInventoryItems().stream().anyMatch(i -> i.getNumber() == t.getNumber()));
-        assertTrue(zoo.findInventoryByNumber(t.getNumber()).isPresent());
-        assertEquals("TestTable", zoo.findInventoryByNumber(t.getNumber()).get().getName());
+    static class RejectAllClinic implements VeterinaryClinic {
+        @Override
+        public boolean isHealthy(zoo.domain.animal.Animal animal) {
+            return false;
+        }
     }
 
     @Test
-    public void shouldAcceptHealthyAnimal() {
-        when(clinicMock.isHealthy(any(Animal.class))).thenReturn(true);
-        Animal rabbit = new Rabbit("r", 1, true, 7);
+    void addAnimal_acceptAllClinic_animalIsAdded() {
+        Zoo zoo = new Zoo(new AcceptAllClinic(), new SimpleAnimalFactory());
 
-        boolean accepted = zoo.tryAdmitAnimal(rabbit);
+        Animal a = zoo.addAnimal(AnimalType.RABBIT, "Bunny", 2, 8);
 
-        assertTrue(accepted);
-        assertEquals(1, zoo.getAnimals().size());
+        assertNotNull(a);
+        assertEquals(1, zoo.getAllAnimals().size());
+        assertEquals("Bunny", a.getName());
+        assertEquals(2, a.getFoodPerDay());
     }
 
     @Test
-    public void shouldRejectUnhealthyAnimal() {
-        when(clinicMock.isHealthy(any(Animal.class))).thenReturn(false);
-        Animal tiger = new Tiger("t", 5, false);
+    void addAnimal_rejectAllClinic_animalIsNotAdded() {
+        Zoo zoo = new Zoo(new RejectAllClinic(), new SimpleAnimalFactory());
 
-        boolean accepted = zoo.tryAdmitAnimal(tiger);
+        Animal a = zoo.addAnimal(AnimalType.RABBIT, "Bunny", 2, 8);
 
-        assertFalse(accepted);
-        assertEquals(0, zoo.getAnimals().size());
+        assertNull(a);
+        assertTrue(zoo.getAllAnimals().isEmpty());
     }
 
     @Test
-    public void totalFoodIsSumOfAliveItemsAndIgnoresThings() {
-        when(clinicMock.isHealthy(any(Animal.class))).thenReturn(true);
-        zoo.tryAdmitAnimal(new Rabbit("r1", 1, true, 6));
-        zoo.tryAdmitAnimal(new Rabbit("r2", 2, true, 3));
-        zoo.addThing(new Thing("Table1"));
+    void totalFood_isSumOfAllAnimals() {
+        Zoo zoo = new Zoo(new AcceptAllClinic(), new SimpleAnimalFactory());
 
-        assertEquals(3, zoo.totalFoodPerDayKg());
+        zoo.addAnimal(AnimalType.RABBIT, "Bunny", 2, 8);
+        zoo.addAnimal(AnimalType.MONKEY, "Chichi", 3, 7);
+        zoo.addAnimal(AnimalType.TIGER, "Sherkhan", 10, 0);
+
+        assertEquals(2 + 3 + 10, zoo.getTotalDailyFood());
     }
 
     @Test
-    public void removeAnimalByNumber_RemovesOnlyAnimal() {
-        when(clinicMock.isHealthy(any(Animal.class))).thenReturn(true);
-        Rabbit r = new Rabbit("r", 1, true, 6);
-        zoo.tryAdmitAnimal(r);
-        Thing t = new Thing("Desk");
-        zoo.addThing(t);
+    void contactZooAnimals_onlyKindHerbo() {
+        Zoo zoo = new Zoo(new AcceptAllClinic(), new SimpleAnimalFactory());
 
-        int rNum = r.getNumber();
-        int tNum = t.getNumber();
+        zoo.addAnimal(AnimalType.RABBIT, "Добрый кролик", 2, 9); // в контактный
+        zoo.addAnimal(AnimalType.RABBIT, "Злой кролик", 2, 3);   // не идёт
+        zoo.addAnimal(AnimalType.TIGER, "Тигр", 10, 0);          // хищник
 
-        boolean removedAnimal = zoo.removeAnimalByNumber(rNum);
-        assertTrue(removedAnimal);
-        assertFalse(zoo.findInventoryByNumber(rNum).isPresent());
-        assertTrue(zoo.findInventoryByNumber(tNum).isPresent());
+        List<Animal> contact = zoo.getContactZooAnimals();
+
+        assertEquals(1, contact.size());
+        assertEquals("Добрый кролик", contact.get(0).getName());
     }
 
     @Test
-    public void removeThingByNumber_RemovesOnlyThing() {
-        when(clinicMock.isHealthy(any(Animal.class))).thenReturn(true);
-        Rabbit r = new Rabbit("r2", 1, true, 6);
-        zoo.tryAdmitAnimal(r);
-        Thing t = new Thing("Chair");
-        zoo.addThing(t);
+    void inventory_containsAnimalsAndThings_andRemoveByNumberWorks() {
+        Zoo zoo = new Zoo(new AcceptAllClinic(), new SimpleAnimalFactory());
 
-        int rNum = r.getNumber();
-        int tNum = t.getNumber();
+        Animal a1 = zoo.addAnimal(AnimalType.RABBIT, "Кролик", 2, 8);
+        Thing t1 = zoo.addThing(ThingType.TABLE, "Столик");
 
-        boolean removedThing = zoo.removeThingByNumber(tNum);
-        assertTrue(removedThing);
-        assertFalse(zoo.findInventoryByNumber(tNum).isPresent());
-        assertTrue(zoo.findInventoryByNumber(rNum).isPresent());
+        List<zoo.domain.common.Inventory> all = zoo.getAllInventory();
+        assertEquals(2, all.size());
+
+        int animalNumber = a1.getNumber();
+        assertTrue(zoo.removeByInventoryNumber(animalNumber));
+
+        all = zoo.getAllInventory();
+        assertEquals(1, all.size());
+        assertEquals(t1.getNumber(), all.get(0).getNumber());
     }
 }

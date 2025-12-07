@@ -1,4 +1,4 @@
-package zoo;
+package zoo.domain.common;
 
 public interface Inventory {
     int getNumber();

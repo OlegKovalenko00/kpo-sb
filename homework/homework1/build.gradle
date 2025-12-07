@@ -1,61 +1,35 @@
 plugins {
     id 'java'
     id 'application'
-    id 'jacoco'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group = 'zoo'
+
+group = 'org.example'
 version = '1.0-SNAPSHOT'
-sourceCompatibility = '17'
-targetCompatibility = '17'
 
 repositories {
     mavenCentral()
 }
 
-ext {
-    guiceVersion = '5.1.0'
-    junitVersion = '5.9.2'
-    mockitoVersion = '5.3.1'
-}
-
 dependencies {
-    implementation "com.google.inject:guice:${guiceVersion}"
-
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
-    testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
-    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
-    testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.2"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.2"
-    testImplementation "org.mockito:mockito-core:5.3.1"
-    testImplementation "org.mockito:mockito-junit-jupiter:5.3.1"
-}
-
-application {
-    mainClass = 'zoo.Main'
+    implementation 'org.springframework:spring-context:5.3.39'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 
 test {
     useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
+}
+
+application {
+    mainClass = 'zoo.cli.Main'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'zoo.cli.Main'
+        )
     }
 }
 
-jacoco {
-    toolVersion = "0.8.9"
-}
-
-tasks.jacocoTestReport {
-    dependsOn test
-    reports {
-        xml.required.set(true)
-        csv.required.set(false)
-        html.required.set(true)
-    }
-}
-
-tasks.register("coverageReport") {
-    dependsOn(tasks.test, tasks.jacocoTestReport)
-}

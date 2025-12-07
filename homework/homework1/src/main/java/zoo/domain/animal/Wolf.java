@@ -1,0 +1,7 @@
+package zoo.domain.animal;
+
+public class Wolf extends Predator {
+    public Wolf(String name, int number, int foodPerDay) {
+        super(name, number, foodPerDay);
+    }
+}
