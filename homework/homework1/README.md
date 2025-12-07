@@ -42,7 +42,7 @@
 
 ```bash
 ./gradlew clean build
-java -jar build/libs/homework1.jar
+java -jar build/libs/homework1-1.0-SNAPSHOT-all
 ```
 
 ---
