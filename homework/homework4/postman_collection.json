@@ -1,0 +1,183 @@
+{
+	"info": {
+		"_postman_id": "homework4-async-microservices",
+		"name": "Homework 4 - Async Microservices",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "userId",
+			"value": "1"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Create Account",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "{{userId}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/payments/account",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "payments", "account"]
+				}
+			}
+		},
+		{
+			"name": "2. Top Up Account",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "{{userId}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 1000.00\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/payments/account/topup",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "payments", "account", "topup"]
+				}
+			}
+		},
+		{
+			"name": "3. Check Balance",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "{{userId}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/payments/account/balance",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "payments", "account", "balance"]
+				}
+			}
+		},
+		{
+			"name": "4. Create Order",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "{{userId}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 100.00,\n    \"description\": \"Test order\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/orders",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "orders"]
+				}
+			}
+		},
+		{
+			"name": "5. Get All Orders",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "{{userId}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/orders",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "orders"]
+				}
+			}
+		},
+		{
+			"name": "6. Get Order Status",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "{{userId}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/orders/{{orderId}}",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "orders", "{{orderId}}"]
+				}
+			}
+		},
+		{
+			"name": "7. Check Balance After Order",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "{{userId}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/payments/account/balance",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "payments", "account", "balance"]
+				}
+			}
+		},
+		{
+			"name": "8. Create Order Without Balance",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-User-Id",
+						"value": "999"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"amount\": 100.00,\n    \"description\": \"Order without account\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/orders",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "orders"]
+				}
+			}
+		}
+	]
+}
