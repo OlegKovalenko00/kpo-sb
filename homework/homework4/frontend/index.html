@@ -88,7 +88,8 @@
     <div id="notification" class="notification" style="display: none;"></div>
 
     <script>
-        const API_URL = 'http://localhost:8080';
+        // Use same-origin URLs (nginx proxies /api/* -> api-gateway and /ws/* -> orders-service)
+        const API_URL = '';
         let stompClient = null;
 
         function getUserId() {
@@ -103,7 +104,7 @@
         }
 
         function connect() {
-            const socket = new SockJS('http://localhost:8081/ws');
+            const socket = new SockJS('/ws');
             stompClient = Stomp.over(socket);
             stompClient.connect({}, function(frame) {
                 document.getElementById('connectionStatus').className = 'connection-status connected';
@@ -118,6 +119,7 @@
             }, function(error) {
                 document.getElementById('connectionStatus').className = 'connection-status disconnected';
                 document.getElementById('connectionStatus').textContent = 'Ошибка подключения';
+                showNotification('Ошибка WebSocket: ' + (error?.toString?.() ?? 'unknown'));
             });
         }
 
@@ -130,17 +132,38 @@
         }
 
         async function apiCall(url, method = 'GET', body = null) {
-            const headers = { 'X-User-Id': getUserId(), 'Content-Type': 'application/json' };
+            const headers = { 'X-User-Id': String(getUserId()) };
+            if (body !== null) {
+                headers['Content-Type'] = 'application/json';
+            }
             const options = { method, headers };
-            if (body) options.body = JSON.stringify(body);
+            if (body !== null) {
+                options.body = JSON.stringify(body);
+            }
+
             const response = await fetch(API_URL + url, options);
-            return response.json();
+            const contentType = response.headers.get('content-type') || '';
+            const text = await response.text();
+
+            if (!response.ok) {
+                throw new Error(text || response.statusText);
+            }
+
+            if (contentType.includes('application/json') && text) {
+                return JSON.parse(text);
+            }
+            return text;
         }
 
         async function createAccount() {
-            const result = await apiCall('/api/payments/account', 'POST');
-            document.getElementById('balance').textContent = result.balance + ' руб.';
-            showNotification('Счет создан');
+            try {
+                const result = await apiCall('/api/payments/account', 'POST');
+                document.getElementById('balance').textContent = result.balance + ' руб.';
+                showNotification('Счет создан');
+            } catch (e) {
+                showNotification('Ошибка создания счета: ' + (e?.message ?? e));
+                console.error(e);
+            }
         }
 
         async function getBalance() {
@@ -149,40 +172,56 @@
                 document.getElementById('balance').textContent = result.balance + ' руб.';
             } catch (e) {
                 document.getElementById('balance').textContent = 'Счет не найден';
+                console.error(e);
             }
         }
 
         async function topup() {
-            const amount = parseFloat(document.getElementById('topupAmount').value);
-            const result = await apiCall('/api/payments/account/topup', 'POST', { amount });
-            document.getElementById('balance').textContent = result.balance + ' руб.';
-            showNotification('Счет пополнен на ' + amount + ' руб.');
+            try {
+                const amount = parseFloat(document.getElementById('topupAmount').value);
+                const result = await apiCall('/api/payments/account/topup', 'POST', { amount });
+                document.getElementById('balance').textContent = result.balance + ' руб.';
+                showNotification('Счет пополнен на ' + amount + ' руб.');
+            } catch (e) {
+                showNotification('Ошибка пополнения: ' + (e?.message ?? e));
+                console.error(e);
+            }
         }
 
         async function createOrder() {
-            const amount = parseFloat(document.getElementById('orderAmount').value);
-            const description = document.getElementById('orderDescription').value;
-            const result = await apiCall('/api/orders', 'POST', { amount, description });
-            showNotification('Заказ создан: ' + result.id);
-            loadOrders();
+            try {
+                const amount = parseFloat(document.getElementById('orderAmount').value);
+                const description = document.getElementById('orderDescription').value;
+                const result = await apiCall('/api/orders', 'POST', { amount, description });
+                showNotification('Заказ создан: ' + result.id);
+                loadOrders();
+            } catch (e) {
+                showNotification('Ошибка создания заказа: ' + (e?.message ?? e));
+                console.error(e);
+            }
         }
 
         async function loadOrders() {
-            const orders = await apiCall('/api/orders');
-            const list = document.getElementById('ordersList');
-            if (orders.length === 0) {
-                list.innerHTML = 'Нет заказов';
-                return;
+            try {
+                const orders = await apiCall('/api/orders');
+                const list = document.getElementById('ordersList');
+                if (!orders || orders.length === 0) {
+                    list.innerHTML = 'Нет заказов';
+                    return;
+                }
+                list.innerHTML = orders.map(order => `
+                    <div class="order-item">
+                        <strong>ID:</strong> ${order.id}<br>
+                        <strong>Сумма:</strong> ${order.amount} руб.<br>
+                        <strong>Описание:</strong> ${order.description}<br>
+                        <strong>Статус:</strong> <span class="status ${order.status}">${order.status}</span><br>
+                        <strong>Создан:</strong> ${new Date(order.createdAt).toLocaleString()}
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('ordersList').innerHTML = 'Ошибка загрузки заказов';
+                console.error(e);
             }
-            list.innerHTML = orders.map(order => `
-                <div class="order-item">
-                    <strong>ID:</strong> ${order.id}<br>
-                    <strong>Сумма:</strong> ${order.amount} руб.<br>
-                    <strong>Описание:</strong> ${order.description}<br>
-                    <strong>Статус:</strong> <span class="status ${order.status}">${order.status}</span><br>
-                    <strong>Создан:</strong> ${new Date(order.createdAt).toLocaleString()}
-                </div>
-            `).join('');
         }
 
         window.onload = function() {
