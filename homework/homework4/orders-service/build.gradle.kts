@@ -27,6 +27,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
     
     runtimeOnly("org.postgresql:postgresql")

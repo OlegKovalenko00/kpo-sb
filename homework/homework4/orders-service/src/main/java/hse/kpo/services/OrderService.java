@@ -30,6 +30,7 @@ public class OrderService {
     private final OutboxEventRepository outboxEventRepository;
     private final ProcessedMessageRepository processedMessageRepository;
     private final ObjectMapper objectMapper;
+    private final OrderNotificationService notificationService;
 
     @Transactional
     public OrderResponse createOrder(Long userId, CreateOrderRequest request) {
@@ -101,7 +102,8 @@ public class OrderService {
                 } else {
                     order.setStatus(OrderStatus.CANCELLED);
                 }
-                orderRepository.save(order);
+                Order savedOrder = orderRepository.save(order);
+                notificationService.notifyOrderStatusChange(toResponse(savedOrder));
             }
         });
     }
